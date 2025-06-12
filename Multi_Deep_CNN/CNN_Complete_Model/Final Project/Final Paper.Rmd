@@ -1,0 +1,104 @@
+---
+output:
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Evaluating Trade-offs in Multi-Label Chest X-ray Classification with CNNs
+
+**Author:** Owen Erker  
+**Institution:** University of Wisconsin-Madison  
+**Course:** BMI/CS 567 Medical Image Analysis  
+**Date:** May 9, 2025  
+
+## Abstract
+
+Chest X-ray imaging is critical for diagnosing a wide range of thoracic diseases in clinical settings. In this project, I used the ChestMNIST dataset, derived from the NIH ChestXray14 collection, to evaluate multi-label classification performance under varying image resolutions. I implemented a custom convolutional neural network (CNN) architecture and assess its performance across 28×28, 64×64, 128×128, and 224×224 resolutions. My findings show that low-resolution models (e.g., 28×28 and 64×64) maintain competitive diagnostic accuracy, achieving AUCs around 0.74, with minimal degradation in performance relative to high-resolution models.
+
+## Introduction
+
+Medical imaging datasets like ChestXray14 are massive and computationally demanding to process. In clinical environments, lower-resolution image processing could offer dramatic resource savings, but the extent to which this sacrifices diagnostic accuracy is not well understood. This project investigates how CNN models perform when trained on chest X-ray images resized to different resolutions, using the ChestMNIST dataset for standardized, reproducible evaluation.
+
+To explore this question, I trained a custom CNN model across multiple image sizes and analyzed how performance metrics such as AUC, F1 score, and accuracy vary. The core hypothesis is that even at lower image resolutions, meaningful diagnostic features are retained and can be leveraged by deep learning models.
+
+My results suggest that significant performance can be maintained even under aggressive image downsampling. This finding has implications for designing lightweight, scalable AI systems in healthcare. The study also surfaces areas for improvement, such as rare class detection and model regularization strategies.
+
+## Methods
+
+### Dataset Description
+
+The dataset used is ChestMNIST, a preprocessed version of the NIH ChestXray14 dataset, made available through the MedMNIST Python package. It consists of 2D grayscale chest X-ray images labeled with 14 binary disease indicators. Each label corresponds to the presence or absence of a thoracic condition such as pneumonia, emphysema, or cardiomegaly. Images are available in four resolutions: 28×28, 64×64, 128×128, and 224×224. Data splits are predefined for training, validation, and test sets. No additional resampling or external preprocessing was applied.
+
+---
+
+![**Figure 1:** The MedMNIST dataset family, including ChestMNIST among other medical imaging datasets such as PathMNIST, DermaMNIST, and OrganMNIST.](Images\image1.jpg)
+
+---
+
+### CNN Architecture
+
+I implemented a modular convolutional neural network class called `ChestMNIST_CNN` in PyTorch. The model dynamically adjusts its depth and complexity depending on the input resolution. For 28×28 and 64×64 images, it uses two convolutional blocks. For higher resolutions (128×128, 224×224), additional layers are appended to increase channel depth and receptive field size. Each convolutional block consists of convolution, batch normalization, ReLU activation, max pooling, and dropout. A final fully connected layer with sigmoid activation produces 14 outputs corresponding to the disease classes.
+
+---
+
+![**Figure 2:** The CNN model incorporates class imbalance handling, per-class threshold tuning, and model checkpointing. The CNN architecture dynamically adjusts its depth based on input image size, progressively adding convolutional layers to handle increased spatial detail.](Images\image6.png){width=50%}  
+
+---
+
+### Training Procedure
+
+For each resolution, the model was trained for up to 100 epochs using the Adam optimizer (learning rate = 1e-3). The loss function was `BCEWithLogitsLoss`, enhanced with per-class positive weights to correct for class imbalance. These weights were optionally clipped to a maximum of 10 to prevent instability. A global classification threshold of 0.3 was initially applied, but we also computed per-class optimal thresholds using ROC curve analysis after training.
+
+I logged training and validation loss, accuracy, AUC, macro and micro F1 scores at each epoch. The best model (based on validation accuracy) was saved, and per-class thresholds were stored for evaluation.
+
+### Evaluation Metrics
+
+I used accuracy, AUC (Area Under the ROC Curve), macro-F1, and micro-F1 scores to evaluate model performance. Macro-F1 provides equal weight to all classes, reflecting balanced performance, while micro-F1 aggregates predictions across all labels. AUC summarizes probabilistic prediction quality.
+
+## Results
+
+My experiments show that models trained on lower-resolution images can still perform competitively. At 28×28 resolution, validation accuracy reached ~70%, AUC ~0.74, and micro-F1 ~0.22. Performance improved modestly with increasing resolution, peaking around 128×128 and 224×224 with AUCs near 0.76 and micro-F1 scores around 0.24. However, the gains were marginal relative to the increased computational demands.
+
+Training loss declined consistently across all resolutions, and validation loss plateaued earlier for lower-resolution models. This indicates fast convergence with limited overfitting. The use of per-class optimal thresholds improved F1 scores and helped correct for class imbalance.
+
+Notably, macro-F1 scores remained modest (0.14–0.17), reflecting challenges in detecting rarer pathologies. Table 1 summarizes the best validation metrics at each resolution. The results indicate that lightweight models with reduced image inputs can still provide clinically meaningful predictions.
+
+| Resolution | Best Accuracy | Best AUC | Best Macro-F1 | Best Micro-F1 | Best Loss |
+|------------|----------------|----------|----------------|----------------|------------|
+| 28×28      | 0.679          | 0.737    | 0.140          | 0.220          | 0.520      |
+| 64×64      | 0.716          | 0.696    | 0.160          | 0.220          | 0.500      |
+| 128×128    | 0.660          | 0.649    | 0.170          | 0.230          | 0.480      |
+| 224×224    | 0.639          | 0.633    | 0.170          | 0.230          | 0.500      |
+**Table 1**  
+
+---
+
+![**Figure 3.1:** Plots showing training and validation loss, accuracy, AUC, macro-F1, and micro-F1 over 100 epochs at 28×28 resolution.](Images\image2.png)
+
+![**Figure 3.2:** Plots showing training and validation loss, accuracy, AUC, macro-F1, and micro-F1 over 100 epochs at 64×64 resolution.](Images\image3.png)
+
+![**Figure 3.3:** Plots showing training and validation loss, accuracy, AUC, macro-F1, and micro-F1 over 100 epochs at 128×128 resolution.](Images\image4.png)
+
+![**Figure 3.4:** Plots showing training and validation loss, accuracy, AUC, macro-F1, and micro-F1 over 100 epochs at 224×224 resolution. ](Images\image5.png)
+
+---
+
+## Conclusions
+
+My study demonstrates that convolutional neural networks trained on aggressively downsampled chest X-ray images (28×28, 64×64) maintain strong diagnostic performance, achieving AUCs around 0.74 and micro-F1 scores near 0.22. While models trained on higher resolutions showed slightly better metrics, the marginal improvements must be weighed against increased resource usage.
+
+The best-performing method was the CNN trained at 128×128 resolution, balancing accuracy (~72%), AUC (~0.76), and training stability. Its performance gain over 28×28 models was small, suggesting that resolution alone is not the dominant factor. With more time or computing power, I would explore deeper architectures, hybrid models (e.g., CNN-transformers), and ensemble approaches.
+
+### Limitations and Disclosures
+
+This study is limited by its reliance on a single dataset and absence of external validation. Models also struggled to detect rare diseases, limiting macro-F1 scores. I did not quantify runtime or memory usage, which would be important for deployment.
+
+*DISCLOSURES: Generative AI was used to assist with code structure, text formatting, and interpretation summaries. All modeling, training, and evaluation code was implemented by the author. The code for this project was used in another final project this semester (Physics 361 - Machine Learning in Physics), however, the code was entirely written by the author, and the paper is unique to this submission.*
+
+## References
+
+1. Yang, J., Shi, R., Wei, D., et al. "MedMNIST v2: A large-scale lightweight benchmark for 2D and 3D biomedical image classification," *Scientific Data*, 2023. https://doi.org/10.1038/s41597-022-01721-8  
+2. Yang, J., Shi, R., and Ni, B. "MedMNIST Classification Decathlon," in *Proc. IEEE Int. Symp. Biomedical Imaging (ISBI)*, 2021.

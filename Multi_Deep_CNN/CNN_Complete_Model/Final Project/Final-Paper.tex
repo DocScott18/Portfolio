@@ -1,0 +1,232 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\usepackage{bookmark}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  pdftitle={Final Paper},
+  pdfauthor={Owen Erker},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Final Paper}
+\author{Owen Erker}
+\date{2025-05-08}
+
+\begin{document}
+\maketitle
+
+\section{Evaluating Trade-offs in Multi-Label Chest X-ray Classification
+with
+CNNs}\label{evaluating-trade-offs-in-multi-label-chest-x-ray-classification-with-cnns}
+
+\textbf{Author:} Owen Erker\\
+\textbf{Institution:} University of {[}Your Institution Here{]}\\
+\textbf{Course:} BMI/CS 567 Medical Image Analysis\\
+\textbf{Date:} April 11, 2025
+
+\subsection{Abstract}\label{abstract}
+
+Chest X-ray imaging is critical for diagnosing a wide range of thoracic
+diseases in clinical settings. In this project, we use the ChestMNIST
+dataset, derived from the NIH ChestXray14 collection, to evaluate
+multi-label classification performance under varying image resolutions.
+We implement a custom convolutional neural network (CNN) architecture
+and assess its performance across 28×28, 64×64, 128×128, and 224×224
+resolutions. Our findings show that low-resolution models (e.g., 28×28
+and 64×64) maintain competitive diagnostic accuracy, achieving AUCs
+around 0.74, with minimal degradation in performance relative to
+high-resolution models.
+
+\subsection{Introduction}\label{introduction}
+
+Medical imaging datasets like ChestXray14 are massive and
+computationally demanding to process. In clinical environments,
+lower-resolution image processing could offer dramatic resource savings,
+but the extent to which this sacrifices diagnostic accuracy is not well
+understood. This project investigates how CNN models perform when
+trained on chest X-ray images resized to different resolutions, using
+the ChestMNIST dataset for standardized, reproducible evaluation.
+
+To explore this question, we trained a custom CNN model across multiple
+image sizes and analyzed how performance metrics such as AUC, F1 score,
+and accuracy vary. The core hypothesis is that even at lower image
+resolutions, meaningful diagnostic features are retained and can be
+leveraged by deep learning models.
+
+Our results suggest that significant performance can be maintained even
+under aggressive image downsampling. This finding has implications for
+designing lightweight, scalable AI systems in healthcare. The study also
+surfaces areas for improvement, such as rare class detection and model
+regularization strategies.
+
+\subsection{Methods}\label{methods}
+
+\subsubsection{Dataset Description}\label{dataset-description}
+
+The dataset used is ChestMNIST, a preprocessed version of the NIH
+ChestXray14 dataset, made available through the MedMNIST Python package.
+It consists of 2D grayscale chest X-ray images labeled with 14 binary
+disease indicators. Each label corresponds to the presence or absence of
+a thoracic condition such as pneumonia, emphysema, or cardiomegaly.
+Images are available in four resolutions: 28×28, 64×64, 128×128, and
+224×224. Data splits are predefined for training, validation, and test
+sets. No additional resampling or external preprocessing was applied.
+
+\subsubsection{CNN Architecture}\label{cnn-architecture}
+
+We implemented a modular convolutional neural network class called
+\texttt{ChestMNIST\_CNN} in PyTorch. The model dynamically adjusts its
+depth and complexity depending on the input resolution. For 28×28 and
+64×64 images, it uses two convolutional blocks. For higher resolutions
+(128×128, 224×224), additional layers are appended to increase channel
+depth and receptive field size. Each convolutional block consists of
+convolution, batch normalization, ReLU activation, max pooling, and
+dropout. A final fully connected layer with sigmoid activation produces
+14 outputs corresponding to the disease classes.
+
+\subsubsection{Training Procedure}\label{training-procedure}
+
+For each resolution, the model was trained for up to 100 epochs using
+the Adam optimizer (learning rate = 1e-3). The loss function was
+\texttt{BCEWithLogitsLoss}, enhanced with per-class positive weights to
+correct for class imbalance. These weights were optionally clipped to a
+maximum of 10 to prevent instability. A global classification threshold
+of 0.3 was initially applied, but we also computed per-class optimal
+thresholds using ROC curve analysis after training.
+
+We logged training and validation loss, accuracy, AUC, macro and micro
+F1 scores at each epoch. The best model (based on validation accuracy)
+was saved, and per-class thresholds were stored for evaluation.
+
+\subsubsection{Evaluation Metrics}\label{evaluation-metrics}
+
+We used accuracy, AUC (Area Under the ROC Curve), macro-F1, and micro-F1
+scores to evaluate model performance. Macro-F1 provides equal weight to
+all classes, reflecting balanced performance, while micro-F1 aggregates
+predictions across all labels. AUC summarizes probabilistic prediction
+quality.
+
+\subsection{Results}\label{results}
+
+Our experiments show that models trained on lower-resolution images can
+still perform competitively. At 28×28 resolution, validation accuracy
+reached \textasciitilde70\%, AUC \textasciitilde0.74, and micro-F1
+\textasciitilde0.22. Performance improved modestly with increasing
+resolution, peaking around 128×128 and 224×224 with AUCs near 0.76 and
+micro-F1 scores around 0.24. However, the gains were marginal relative
+to the increased computational demands.
+
+Training loss declined consistently across all resolutions, and
+validation loss plateaued earlier for lower-resolution models. This
+indicates fast convergence with limited overfitting. The use of
+per-class optimal thresholds improved F1 scores and helped correct for
+class imbalance.
+
+Notably, macro-F1 scores remained modest (0.14--0.17), reflecting
+challenges in detecting rarer pathologies. Table 1 (omitted here)
+summarizes the best validation metrics at each resolution. The results
+indicate that lightweight models with reduced image inputs can still
+provide clinically meaningful predictions.
+
+\subsection{Conclusions}\label{conclusions}
+
+Our study demonstrates that convolutional neural networks trained on
+aggressively downsampled chest X-ray images (28×28, 64×64) maintain
+strong diagnostic performance, achieving AUCs around 0.74 and micro-F1
+scores near 0.22. While models trained on higher resolutions showed
+slightly better metrics, the marginal improvements must be weighed
+against increased resource usage.
+
+The best-performing method was the CNN trained at 128×128 resolution,
+balancing accuracy (\textasciitilde72\%), AUC (\textasciitilde0.76), and
+training stability. Its performance gain over 28×28 models was small,
+suggesting that resolution alone is not the dominant factor. With more
+time or computing power, we would explore deeper architectures, hybrid
+models (e.g., CNN-transformers), and ensemble approaches.
+
+\subsubsection{Limitations and
+Disclosures}\label{limitations-and-disclosures}
+
+This study is limited by its reliance on a single dataset and absence of
+external validation. Models also struggled to detect rare diseases,
+limiting macro-F1 scores. We did not quantify runtime or memory usage,
+which would be important for deployment.
+
+Generative AI was used to assist with code structure, text formatting,
+and interpretation summaries. All modeling, training, and evaluation
+code was implemented by the author.
+
+\subsection{References}\label{references}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Yang, J., Shi, R., Wei, D., et al.~``MedMNIST v2: A large-scale
+  lightweight benchmark for 2D and 3D biomedical image classification,''
+  \emph{Scientific Data}, 2023.
+  \url{https://doi.org/10.1038/s41597-022-01721-8}\\
+\item
+  Yang, J., Shi, R., and Ni, B. ``MedMNIST Classification Decathlon,''
+  in \emph{Proc. IEEE Int. Symp. Biomedical Imaging (ISBI)}, 2021.
+\end{enumerate}
+
+\end{document}

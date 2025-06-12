@@ -1,0 +1,7 @@
+services:
+  shiny-app:
+    build: .
+    container_name: nobel-shiny-app
+    restart: always
+    ports:
+      - "3839:3839"
